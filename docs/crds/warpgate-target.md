@@ -96,6 +96,7 @@ Seven target types are supported: SSH, HTTP, MySQL, PostgreSQL, Kubernetes, RDP,
 | `rdp.verifyTLS` | `bool` | No | `false` | Verify the server certificate against the system root store |
 | `rdp.compression` | `string` | No | `remotefx` | `remotefx` or `lossless` |
 | `rdp.interactiveLogon` | `bool` | No | `false` | Show the target's sign-in screen instead of logging on automatically |
+| `rdp.audioPlayback` | `bool` | No | `false` | Play the target's sound on native RDP clients (Warpgate v0.30+) |
 | `rdp.tlsSecurity` | `string` | No | `Tls12` | `Tls12`, `Tls12WithLegacyCiphers`, or `Tls10Unsafe` |
 
 ### VNC Target

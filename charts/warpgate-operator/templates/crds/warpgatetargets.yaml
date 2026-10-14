@@ -321,6 +321,10 @@ spec:
                 description: rdp configures an RDP target. Exactly one target type
                   must be set.
                 properties:
+                  audioPlayback:
+                    description: audioPlayback plays the target's sound on native
+                      RDP clients. Requires Warpgate v0.30 or later.
+                    type: boolean
                   compression:
                     description: 'compression is the codec: remotefx (default) or
                       lossless.'

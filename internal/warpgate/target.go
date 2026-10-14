@@ -95,6 +95,7 @@ type RDPOptions struct {
 	Compression      string       `json:"compression"` // "remotefx" or "lossless"
 	InteractiveLogon bool         `json:"interactive_logon"`
 	TLSSecurity      string       `json:"tls_security"` // Tls12, Tls12WithLegacyCiphers, Tls10Unsafe
+	AudioPlayback    bool         `json:"audio_playback,omitempty"`
 }
 
 // PasswordAuth is the only RDP auth kind and the password VNC auth kind.
