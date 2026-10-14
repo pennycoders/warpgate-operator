@@ -132,7 +132,7 @@ func (r *WarpgateConnectionReconciler) buildClient(ctx context.Context, conn *wa
 
 	// Prefer token-based auth if the token key exists in the Secret.
 	if token, ok := secret.Data[tokenKey]; ok && len(token) > 0 {
-		return warpgate.NewClient(warpgate.Config{
+		return sharedClient(conn, &secret, warpgate.Config{
 			Host:               conn.Spec.Host,
 			Token:              string(token),
 			InsecureSkipVerify: conn.Spec.InsecureSkipVerify,
@@ -159,7 +159,7 @@ func (r *WarpgateConnectionReconciler) buildClient(ctx context.Context, conn *wa
 		return nil, fmt.Errorf("key %q not found in auth secret %q", passwordKey, conn.Spec.AuthSecretRef.Name)
 	}
 
-	return warpgate.NewClient(warpgate.Config{
+	return sharedClient(conn, &secret, warpgate.Config{
 		Host:               conn.Spec.Host,
 		Username:           string(username),
 		Password:           string(password),

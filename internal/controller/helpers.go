@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -51,7 +52,7 @@ func getWarpgateClient(ctx context.Context, r client.Reader, namespace, connecti
 
 	// Prefer token-based auth if the token key exists in the Secret.
 	if token, ok := secret.Data[tokenKey]; ok && len(token) > 0 {
-		return warpgate.NewClient(warpgate.Config{
+		return sharedClient(&conn, &secret, warpgate.Config{
 			Host:               conn.Spec.Host,
 			Token:              string(token),
 			InsecureSkipVerify: conn.Spec.InsecureSkipVerify,
@@ -78,10 +79,39 @@ func getWarpgateClient(ctx context.Context, r client.Reader, namespace, connecti
 		return nil, fmt.Errorf("key %q not found in auth secret %q", passwordKey, conn.Spec.AuthSecretRef.Name)
 	}
 
-	return warpgate.NewClient(warpgate.Config{
+	return sharedClient(&conn, &secret, warpgate.Config{
 		Host:               conn.Spec.Host,
 		Username:           string(username),
 		Password:           string(password),
 		InsecureSkipVerify: conn.Spec.InsecureSkipVerify,
 	}), nil
+}
+
+// clients holds one Warpgate client per WarpgateConnection, so every reconcile shares its
+// session instead of logging in again.
+var clients = struct {
+	sync.Mutex
+	byConnection map[types.NamespacedName]cachedClient
+}{byConnection: map[types.NamespacedName]cachedClient{}}
+
+type cachedClient struct {
+	config         warpgate.Config
+	secretUID      types.UID
+	secretRevision string
+	client         *warpgate.Client
+}
+
+// sharedClient returns the connection's client, built again when its configuration or
+// its credentials Secret changed.
+func sharedClient(conn *warpgatev1alpha1.WarpgateConnection, secret *corev1.Secret, cfg warpgate.Config) *warpgate.Client {
+	key := types.NamespacedName{Namespace: conn.Namespace, Name: conn.Name}
+	clients.Lock()
+	defer clients.Unlock()
+	if c, ok := clients.byConnection[key]; ok && c.config == cfg &&
+		c.secretUID == secret.UID && c.secretRevision == secret.ResourceVersion {
+		return c.client
+	}
+	c := warpgate.NewClient(cfg)
+	clients.byConnection[key] = cachedClient{config: cfg, secretUID: secret.UID, secretRevision: secret.ResourceVersion, client: c}
+	return c
 }

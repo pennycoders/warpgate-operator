@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"strings"
+	"sync"
 )
 
 const apiBasePath = "/@warpgate/admin/api"
@@ -40,7 +41,9 @@ type Client struct {
 	username   string
 	password   string
 	httpClient *http.Client
-	authed     bool
+
+	mu     sync.Mutex
+	authed bool
 }
 
 // NewClient creates a new Warpgate API client from the given config.
@@ -94,6 +97,8 @@ func NewTestClient(host string) *Client {
 
 // login authenticates with Warpgate and stores the session cookie.
 func (c *Client) login() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.authed {
 		return nil
 	}
@@ -126,6 +131,28 @@ func (c *Client) login() error {
 }
 
 func (c *Client) doRequest(method, path string, body any) (*http.Response, error) {
+	var data []byte
+	if body != nil {
+		var err error
+		if data, err = json.Marshal(body); err != nil {
+			return nil, fmt.Errorf("marshaling request body: %w", err)
+		}
+	}
+
+	resp, err := c.send(method, path, data)
+	if err != nil || resp.StatusCode != http.StatusUnauthorized || c.token != "" {
+		return resp, err
+	}
+
+	// The session expired: log in again once.
+	_ = resp.Body.Close()
+	c.mu.Lock()
+	c.authed = false
+	c.mu.Unlock()
+	return c.send(method, path, data)
+}
+
+func (c *Client) send(method, path string, data []byte) (*http.Response, error) {
 	if err := c.login(); err != nil {
 		return nil, fmt.Errorf("authenticating: %w", err)
 	}
@@ -133,11 +160,7 @@ func (c *Client) doRequest(method, path string, body any) (*http.Response, error
 	url := c.baseURL + path
 
 	var reqBody io.Reader
-	if body != nil {
-		data, err := json.Marshal(body)
-		if err != nil {
-			return nil, fmt.Errorf("marshaling request body: %w", err)
-		}
+	if data != nil {
 		reqBody = bytes.NewReader(data)
 	}
 
