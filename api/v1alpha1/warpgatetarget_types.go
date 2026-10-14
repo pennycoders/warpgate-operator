@@ -168,6 +168,9 @@ type RDPTargetSpec struct {
 	// interactiveLogon shows the target's own sign-in screen instead of logging on automatically.
 	// +optional
 	InteractiveLogon bool `json:"interactiveLogon,omitempty"`
+	// audioPlayback plays the target's sound on native RDP clients. Requires Warpgate v0.30 or later.
+	// +optional
+	AudioPlayback bool `json:"audioPlayback,omitempty"`
 	// tlsSecurity is the TLS profile for the target connection. Defaults to Tls12.
 	// +kubebuilder:validation:Enum=Tls12;Tls12WithLegacyCiphers;Tls10Unsafe
 	// +optional
