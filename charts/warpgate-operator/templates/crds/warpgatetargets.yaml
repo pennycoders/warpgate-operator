@@ -342,6 +342,10 @@ spec:
                     description: interactiveLogon shows the target's own sign-in screen
                       instead of logging on automatically.
                     type: boolean
+                  microphone:
+                    description: microphone lets the target record from the viewer's
+                      microphone. Requires a Warpgate with the RDP microphone option.
+                    type: boolean
                   passwordSecretRef:
                     description: passwordSecretRef references a Secret containing
                       the RDP password.

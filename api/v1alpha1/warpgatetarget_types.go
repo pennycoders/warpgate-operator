@@ -171,6 +171,9 @@ type RDPTargetSpec struct {
 	// audioPlayback plays the target's sound on native RDP clients. Requires Warpgate v0.30 or later.
 	// +optional
 	AudioPlayback bool `json:"audioPlayback,omitempty"`
+	// microphone lets the target record from the viewer's microphone. Requires a Warpgate with the RDP microphone option.
+	// +optional
+	Microphone bool `json:"microphone,omitempty"`
 	// tlsSecurity is the TLS profile for the target connection. Defaults to Tls12.
 	// +kubebuilder:validation:Enum=Tls12;Tls12WithLegacyCiphers;Tls10Unsafe
 	// +optional

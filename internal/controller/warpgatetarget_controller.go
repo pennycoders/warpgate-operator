@@ -345,6 +345,7 @@ func (r *WarpgateTargetReconciler) buildRDPOptions(ctx context.Context, ns strin
 		InteractiveLogon: spec.InteractiveLogon,
 		TLSSecurity:      tlsSecurity,
 		AudioPlayback:    spec.AudioPlayback,
+		Microphone:       spec.Microphone,
 	}, nil
 }
 
