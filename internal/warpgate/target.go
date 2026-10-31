@@ -99,6 +99,9 @@ type RDPOptions struct {
 	Microphone          bool         `json:"microphone,omitempty"`
 	ClipboardFiles      bool         `json:"clipboard_files,omitempty"`
 	ClipboardFilesMaxMB *int32       `json:"clipboard_files_max_mb,omitempty"`
+	DriveRedirection    bool         `json:"drive_redirection,omitempty"`
+	DriveReadOnly       *bool        `json:"drive_read_only,omitempty"`
+	DriveUploadsMaxMB   *int32       `json:"drive_uploads_max_mb,omitempty"`
 }
 
 // PasswordAuth is the only RDP auth kind and the password VNC auth kind.

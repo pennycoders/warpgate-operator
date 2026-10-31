@@ -2712,6 +2712,7 @@ var _ = Describe("WarpgateTarget Controller", func() {
 			Expect(opts).NotTo(HaveKey("microphone"))
 			Expect(opts).NotTo(HaveKey("clipboard_files"))
 			Expect(opts).NotTo(HaveKey("clipboard_files_max_mb"))
+			Expect(opts).NotTo(HaveKey("drive_redirection"))
 			auth, ok := opts["auth"].(map[string]any)
 			Expect(ok).To(BeTrue())
 			Expect(auth["kind"]).To(Equal("Password"))
@@ -2815,6 +2816,78 @@ var _ = Describe("WarpgateTarget Controller", func() {
 			Expect(json.Unmarshal(req["options"], &opts)).To(Succeed())
 			Expect(opts["clipboard_files"]).To(BeTrue())
 			Expect(opts["clipboard_files_max_mb"]).To(BeEquivalentTo(64))
+		})
+
+		It("should send drive_redirection and leave read-only to Warpgate when driveReadOnly is unset", func() {
+			target := &warpgatev1alpha1.WarpgateTarget{
+				ObjectMeta: metav1.ObjectMeta{Name: targetName, Namespace: namespace},
+				Spec: warpgatev1alpha1.WarpgateTargetSpec{
+					ConnectionRef: connName,
+					Name:          "my-rdp-target",
+					RDP: &warpgatev1alpha1.RDPTargetSpec{
+						Host:             "10.0.0.50",
+						Port:             3389,
+						Username:         "Administrator",
+						DriveRedirection: true,
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, target)).To(Succeed())
+
+			nn := types.NamespacedName{Name: targetName, Namespace: namespace}
+			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			mu.Lock()
+			body := capturedBody
+			mu.Unlock()
+			Expect(body).NotTo(BeNil())
+
+			var req map[string]json.RawMessage
+			Expect(json.Unmarshal(body, &req)).To(Succeed())
+			var opts map[string]any
+			Expect(json.Unmarshal(req["options"], &opts)).To(Succeed())
+			Expect(opts["drive_redirection"]).To(BeTrue())
+			Expect(opts).NotTo(HaveKey("drive_read_only"))
+			Expect(opts).NotTo(HaveKey("drive_uploads_max_mb"))
+		})
+
+		It("should send drive_read_only and drive_uploads_max_mb when set", func() {
+			int32Ptr := func(v int32) *int32 { return &v }
+			boolPtr := func(b bool) *bool { return &b }
+			target := &warpgatev1alpha1.WarpgateTarget{
+				ObjectMeta: metav1.ObjectMeta{Name: targetName, Namespace: namespace},
+				Spec: warpgatev1alpha1.WarpgateTargetSpec{
+					ConnectionRef: connName,
+					Name:          "my-rdp-target",
+					RDP: &warpgatev1alpha1.RDPTargetSpec{
+						Host:              "10.0.0.50",
+						Port:              3389,
+						Username:          "Administrator",
+						DriveRedirection:  true,
+						DriveReadOnly:     boolPtr(false),
+						DriveUploadsMaxMB: int32Ptr(128),
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, target)).To(Succeed())
+
+			nn := types.NamespacedName{Name: targetName, Namespace: namespace}
+			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			mu.Lock()
+			body := capturedBody
+			mu.Unlock()
+			Expect(body).NotTo(BeNil())
+
+			var req map[string]json.RawMessage
+			Expect(json.Unmarshal(body, &req)).To(Succeed())
+			var opts map[string]any
+			Expect(json.Unmarshal(req["options"], &opts)).To(Succeed())
+			Expect(opts["drive_redirection"]).To(BeTrue())
+			Expect(opts["drive_read_only"]).To(BeFalse())
+			Expect(opts["drive_uploads_max_mb"]).To(BeEquivalentTo(128))
 		})
 	})
 

@@ -183,6 +183,19 @@ type RDPTargetSpec struct {
 	// +kubebuilder:validation:Maximum=65536
 	// +optional
 	ClipboardFilesMaxMB *int32 `json:"clipboardFilesMaxMB,omitempty"`
+	// driveRedirection redirects drives to the target: a native client's own redirected drives, relayed by
+	// Warpgate, or in the browser a session drive holding uploaded files. Requires a Warpgate with the RDP
+	// drive_redirection option.
+	// +optional
+	DriveRedirection bool `json:"driveRedirection,omitempty"`
+	// driveReadOnly lets the target only read redirected drives. Warpgate's default (read-only) applies when unset.
+	// +optional
+	DriveReadOnly *bool `json:"driveReadOnly,omitempty"`
+	// driveUploadsMaxMB is the capacity of the browser's session drive, in MiB. Warpgate's default applies when unset.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65536
+	// +optional
+	DriveUploadsMaxMB *int32 `json:"driveUploadsMaxMB,omitempty"`
 	// tlsSecurity is the TLS profile for the target connection. Defaults to Tls12.
 	// +kubebuilder:validation:Enum=Tls12;Tls12WithLegacyCiphers;Tls10Unsafe
 	// +optional

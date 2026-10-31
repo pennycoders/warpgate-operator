@@ -348,6 +348,9 @@ func (r *WarpgateTargetReconciler) buildRDPOptions(ctx context.Context, ns strin
 		Microphone:          spec.Microphone,
 		ClipboardFiles:      spec.ClipboardFiles,
 		ClipboardFilesMaxMB: spec.ClipboardFilesMaxMB,
+		DriveRedirection:    spec.DriveRedirection,
+		DriveReadOnly:       spec.DriveReadOnly,
+		DriveUploadsMaxMB:   spec.DriveUploadsMaxMB,
 	}, nil
 }
 

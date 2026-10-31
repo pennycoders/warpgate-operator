@@ -347,6 +347,23 @@ spec:
                   domain:
                     description: domain is the Windows logon domain.
                     type: string
+                  driveReadOnly:
+                    description: driveReadOnly lets the target only read redirected
+                      drives. Warpgate's default (read-only) applies when unset.
+                    type: boolean
+                  driveRedirection:
+                    description: |-
+                      driveRedirection redirects drives to the target: a native client's own redirected drives, relayed by
+                      Warpgate, or in the browser a session drive holding uploaded files. Requires a Warpgate with the RDP
+                      drive_redirection option.
+                    type: boolean
+                  driveUploadsMaxMB:
+                    description: driveUploadsMaxMB is the capacity of the browser's
+                      session drive, in MiB. Warpgate's default applies when unset.
+                    format: int32
+                    maximum: 65536
+                    minimum: 1
+                    type: integer
                   host:
                     description: host is the hostname or IP of the RDP server.
                     type: string

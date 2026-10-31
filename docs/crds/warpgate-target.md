@@ -100,6 +100,9 @@ Seven target types are supported: SSH, HTTP, MySQL, PostgreSQL, Kubernetes, RDP,
 | `rdp.microphone` | `bool` | No | `false` | Let the target record from the viewer's microphone (needs a Warpgate with the RDP `microphone` option) |
 | `rdp.clipboardFiles` | `bool` | No | `false` | Copy and paste files through the clipboard, relayed and logged by Warpgate (needs a Warpgate with the RDP `clipboard_files` option) |
 | `rdp.clipboardFilesMaxMB` | `int` | No | Warpgate's | The most one clipboard copy may carry, in MiB (1-65536) |
+| `rdp.driveRedirection` | `bool` | No | `false` | Redirect drives to the target: a native client's drives, or a browser session drive of uploaded files (needs a Warpgate with the RDP `drive_redirection` option) |
+| `rdp.driveReadOnly` | `bool` | No | Warpgate's (`true`) | Let the target only read redirected drives |
+| `rdp.driveUploadsMaxMB` | `int` | No | Warpgate's | Capacity of the browser session drive, in MiB (1-65536) |
 | `rdp.tlsSecurity` | `string` | No | `Tls12` | `Tls12`, `Tls12WithLegacyCiphers`, or `Tls10Unsafe` |
 
 ### VNC Target
