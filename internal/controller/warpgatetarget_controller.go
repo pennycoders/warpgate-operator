@@ -334,18 +334,20 @@ func (r *WarpgateTargetReconciler) buildRDPOptions(ctx context.Context, ns strin
 		tlsSecurity = "Tls12"
 	}
 	return warpgate.RDPOptions{
-		Kind:             "Rdp",
-		Host:             spec.Host,
-		Port:             spec.Port,
-		Username:         spec.Username,
-		Domain:           spec.Domain,
-		Auth:             warpgate.PasswordAuth{Kind: "Password", Password: password},
-		VerifyTLS:        spec.VerifyTLS,
-		Compression:      compression,
-		InteractiveLogon: spec.InteractiveLogon,
-		TLSSecurity:      tlsSecurity,
-		AudioPlayback:    spec.AudioPlayback,
-		Microphone:       spec.Microphone,
+		Kind:                "Rdp",
+		Host:                spec.Host,
+		Port:                spec.Port,
+		Username:            spec.Username,
+		Domain:              spec.Domain,
+		Auth:                warpgate.PasswordAuth{Kind: "Password", Password: password},
+		VerifyTLS:           spec.VerifyTLS,
+		Compression:         compression,
+		InteractiveLogon:    spec.InteractiveLogon,
+		TLSSecurity:         tlsSecurity,
+		AudioPlayback:       spec.AudioPlayback,
+		Microphone:          spec.Microphone,
+		ClipboardFiles:      spec.ClipboardFiles,
+		ClipboardFilesMaxMB: spec.ClipboardFilesMaxMB,
 	}, nil
 }
 

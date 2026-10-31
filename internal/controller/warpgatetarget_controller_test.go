@@ -2710,6 +2710,8 @@ var _ = Describe("WarpgateTarget Controller", func() {
 			Expect(opts["tls_security"]).To(Equal("Tls12"))
 			Expect(opts).NotTo(HaveKey("audio_playback"))
 			Expect(opts).NotTo(HaveKey("microphone"))
+			Expect(opts).NotTo(HaveKey("clipboard_files"))
+			Expect(opts).NotTo(HaveKey("clipboard_files_max_mb"))
 			auth, ok := opts["auth"].(map[string]any)
 			Expect(ok).To(BeTrue())
 			Expect(auth["kind"]).To(Equal("Password"))
@@ -2778,6 +2780,41 @@ var _ = Describe("WarpgateTarget Controller", func() {
 			var opts map[string]any
 			Expect(json.Unmarshal(req["options"], &opts)).To(Succeed())
 			Expect(opts["microphone"]).To(BeTrue())
+		})
+
+		It("should send clipboard_files and its cap when clipboardFiles is set", func() {
+			int32Ptr := func(v int32) *int32 { return &v }
+			target := &warpgatev1alpha1.WarpgateTarget{
+				ObjectMeta: metav1.ObjectMeta{Name: targetName, Namespace: namespace},
+				Spec: warpgatev1alpha1.WarpgateTargetSpec{
+					ConnectionRef: connName,
+					Name:          "my-rdp-target",
+					RDP: &warpgatev1alpha1.RDPTargetSpec{
+						Host:                "10.0.0.50",
+						Port:                3389,
+						Username:            "Administrator",
+						ClipboardFiles:      true,
+						ClipboardFilesMaxMB: int32Ptr(64),
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, target)).To(Succeed())
+
+			nn := types.NamespacedName{Name: targetName, Namespace: namespace}
+			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			mu.Lock()
+			body := capturedBody
+			mu.Unlock()
+			Expect(body).NotTo(BeNil())
+
+			var req map[string]json.RawMessage
+			Expect(json.Unmarshal(body, &req)).To(Succeed())
+			var opts map[string]any
+			Expect(json.Unmarshal(req["options"], &opts)).To(Succeed())
+			Expect(opts["clipboard_files"]).To(BeTrue())
+			Expect(opts["clipboard_files_max_mb"]).To(BeEquivalentTo(64))
 		})
 	})
 

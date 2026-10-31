@@ -85,18 +85,20 @@ type KubernetesAuth struct {
 
 // RDP target options.
 type RDPOptions struct {
-	Kind             string       `json:"kind"` // always "Rdp"
-	Host             string       `json:"host"`
-	Port             int          `json:"port"`
-	Username         string       `json:"username"`
-	Domain           string       `json:"domain,omitempty"`
-	Auth             PasswordAuth `json:"auth"`
-	VerifyTLS        bool         `json:"verify_tls"`
-	Compression      string       `json:"compression"` // "remotefx" or "lossless"
-	InteractiveLogon bool         `json:"interactive_logon"`
-	TLSSecurity      string       `json:"tls_security"` // Tls12, Tls12WithLegacyCiphers, Tls10Unsafe
-	AudioPlayback    bool         `json:"audio_playback,omitempty"`
-	Microphone       bool         `json:"microphone,omitempty"`
+	Kind                string       `json:"kind"` // always "Rdp"
+	Host                string       `json:"host"`
+	Port                int          `json:"port"`
+	Username            string       `json:"username"`
+	Domain              string       `json:"domain,omitempty"`
+	Auth                PasswordAuth `json:"auth"`
+	VerifyTLS           bool         `json:"verify_tls"`
+	Compression         string       `json:"compression"` // "remotefx" or "lossless"
+	InteractiveLogon    bool         `json:"interactive_logon"`
+	TLSSecurity         string       `json:"tls_security"` // Tls12, Tls12WithLegacyCiphers, Tls10Unsafe
+	AudioPlayback       bool         `json:"audio_playback,omitempty"`
+	Microphone          bool         `json:"microphone,omitempty"`
+	ClipboardFiles      bool         `json:"clipboard_files,omitempty"`
+	ClipboardFilesMaxMB *int32       `json:"clipboard_files_max_mb,omitempty"`
 }
 
 // PasswordAuth is the only RDP auth kind and the password VNC auth kind.

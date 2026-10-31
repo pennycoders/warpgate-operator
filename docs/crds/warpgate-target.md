@@ -98,6 +98,8 @@ Seven target types are supported: SSH, HTTP, MySQL, PostgreSQL, Kubernetes, RDP,
 | `rdp.interactiveLogon` | `bool` | No | `false` | Show the target's sign-in screen instead of logging on automatically |
 | `rdp.audioPlayback` | `bool` | No | `false` | Play the target's sound on native RDP clients (Warpgate v0.30+) |
 | `rdp.microphone` | `bool` | No | `false` | Let the target record from the viewer's microphone (needs a Warpgate with the RDP `microphone` option) |
+| `rdp.clipboardFiles` | `bool` | No | `false` | Copy and paste files through the clipboard, relayed and logged by Warpgate (needs a Warpgate with the RDP `clipboard_files` option) |
+| `rdp.clipboardFilesMaxMB` | `int` | No | Warpgate's | The most one clipboard copy may carry, in MiB (1-65536) |
 | `rdp.tlsSecurity` | `string` | No | `Tls12` | `Tls12`, `Tls12WithLegacyCiphers`, or `Tls10Unsafe` |
 
 ### VNC Target

@@ -174,6 +174,15 @@ type RDPTargetSpec struct {
 	// microphone lets the target record from the viewer's microphone. Requires a Warpgate with the RDP microphone option.
 	// +optional
 	Microphone bool `json:"microphone,omitempty"`
+	// clipboardFiles lets files be copied and pasted through the clipboard, in both directions.
+	// Warpgate relays and logs every file. Requires a Warpgate with the RDP clipboard_files option.
+	// +optional
+	ClipboardFiles bool `json:"clipboardFiles,omitempty"`
+	// clipboardFilesMaxMB is the most a single clipboard copy may carry, in MiB. Warpgate's default applies when unset.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65536
+	// +optional
+	ClipboardFilesMaxMB *int32 `json:"clipboardFilesMaxMB,omitempty"`
 	// tlsSecurity is the TLS profile for the target connection. Defaults to Tls12.
 	// +kubebuilder:validation:Enum=Tls12;Tls12WithLegacyCiphers;Tls10Unsafe
 	// +optional

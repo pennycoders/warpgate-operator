@@ -325,6 +325,18 @@ spec:
                     description: audioPlayback plays the target's sound on native
                       RDP clients. Requires Warpgate v0.30 or later.
                     type: boolean
+                  clipboardFiles:
+                    description: |-
+                      clipboardFiles lets files be copied and pasted through the clipboard, in both directions.
+                      Warpgate relays and logs every file. Requires a Warpgate with the RDP clipboard_files option.
+                    type: boolean
+                  clipboardFilesMaxMB:
+                    description: clipboardFilesMaxMB is the most a single clipboard
+                      copy may carry, in MiB. Warpgate's default applies when unset.
+                    format: int32
+                    maximum: 65536
+                    minimum: 1
+                    type: integer
                   compression:
                     description: 'compression is the codec: remotefx (default) or
                       lossless.'
