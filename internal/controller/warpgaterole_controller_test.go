@@ -313,6 +313,99 @@ var _ = Describe("WarpgateRole Controller", func() {
 		})
 	})
 
+	Context("Warpgate already has a role of the same name", func() {
+		// conflictMux serves a Warpgate that holds the role "shared" under existingID:
+		// creating or renaming another role to that name is refused with 409.
+		conflictMux := func(existingID string, puts *[]string) *http.ServeMux {
+			mux := http.NewServeMux()
+			mockLogin(mux)
+			mux.HandleFunc("/@warpgate/admin/api/roles", func(w http.ResponseWriter, r *http.Request) {
+				switch r.Method {
+				case http.MethodPost:
+					w.WriteHeader(http.StatusConflict)
+					_, _ = w.Write([]byte(`"Name already exists"`))
+				case http.MethodGet:
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode([]warpgate.Role{
+						{ID: "role-shared-copy", Name: "shared (2)"},
+						{ID: existingID, Name: "shared"},
+					})
+				}
+			})
+			mux.HandleFunc("/@warpgate/admin/api/role/", func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPut {
+					return
+				}
+				id := r.URL.Path[len("/@warpgate/admin/api/role/"):]
+				*puts = append(*puts, id)
+				if id != existingID {
+					w.WriteHeader(http.StatusConflict)
+					_, _ = w.Write([]byte(`"Name already exists"`))
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(warpgate.Role{ID: id, Name: "shared"})
+			})
+			return mux
+		}
+
+		sharedRole := func(name, suffix string) *warpgatev1alpha1.WarpgateRole {
+			return &warpgatev1alpha1.WarpgateRole{
+				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: roleNamespace},
+				Spec: warpgatev1alpha1.WarpgateRoleSpec{
+					ConnectionRef: connName + suffix,
+					Name:          "shared",
+					Description:   "adopted",
+				},
+			}
+		}
+
+		It("should adopt the existing role when creating", func() {
+			var puts []string
+			srv := setupMockAndConnection(conflictMux("role-shared-001", &puts), "-adopt-create")
+			defer srv.Close()
+
+			role := sharedRole("test-adopt-create", "-adopt-create")
+			Expect(k8sClient.Create(ctx, role)).To(Succeed())
+			nn := types.NamespacedName{Name: role.Name, Namespace: roleNamespace}
+
+			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			var updated warpgatev1alpha1.WarpgateRole
+			Expect(k8sClient.Get(ctx, nn, &updated)).To(Succeed())
+			Expect(updated.Status.ExternalID).To(Equal("role-shared-001"))
+			Expect(puts).To(Equal([]string{"role-shared-001"}))
+			readyCond := findReadyCondition(updated.Status.Conditions)
+			Expect(readyCond).NotTo(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
+		})
+
+		It("should move a stale ExternalID to the role that holds the name", func() {
+			var puts []string
+			srv := setupMockAndConnection(conflictMux("role-shared-002", &puts), "-adopt-update")
+			defer srv.Close()
+
+			role := sharedRole("test-adopt-update", "-adopt-update")
+			Expect(k8sClient.Create(ctx, role)).To(Succeed())
+			nn := types.NamespacedName{Name: role.Name, Namespace: roleNamespace}
+			Expect(k8sClient.Get(ctx, nn, role)).To(Succeed())
+			role.Status.ExternalID = "role-shared-copy"
+			Expect(k8sClient.Status().Update(ctx, role)).To(Succeed())
+
+			_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			var updated warpgatev1alpha1.WarpgateRole
+			Expect(k8sClient.Get(ctx, nn, &updated)).To(Succeed())
+			Expect(updated.Status.ExternalID).To(Equal("role-shared-002"))
+			Expect(puts).To(Equal([]string{"role-shared-copy", "role-shared-002"}))
+			readyCond := findReadyCondition(updated.Status.Conditions)
+			Expect(readyCond).NotTo(BeNil())
+			Expect(readyCond.Status).To(Equal(metav1.ConditionTrue))
+		})
+	})
+
 	Context("Create role API error", func() {
 		It("should set Ready=False with CreateFailed when the API returns an error", func() {
 			mux := http.NewServeMux()

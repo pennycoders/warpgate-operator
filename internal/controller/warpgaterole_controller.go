@@ -107,6 +107,9 @@ func (r *WarpgateRoleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if role.Status.ExternalID == "" {
 		// Create the role in Warpgate.
 		created, err := wgClient.CreateRole(roleReq)
+		if warpgate.IsConflict(err) {
+			created, err = adoptRole(wgClient, roleReq)
+		}
 		if err != nil {
 			log.Error(err, "failed to create role in Warpgate")
 			meta.SetStatusCondition(&role.Status.Conditions, metav1.Condition{
@@ -123,7 +126,16 @@ func (r *WarpgateRoleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		log.Info("created role in Warpgate", "externalID", created.ID)
 	} else {
 		// Update the existing role in Warpgate.
-		if _, err := wgClient.UpdateRole(role.Status.ExternalID, roleReq); err != nil {
+		_, err = wgClient.UpdateRole(role.Status.ExternalID, roleReq)
+		if warpgate.IsConflict(err) {
+			// Another role holds the name, so ExternalID points at a stale copy.
+			var adopted *warpgate.Role
+			if adopted, err = adoptRole(wgClient, roleReq); err == nil {
+				log.Info("adopted the role of the same name in Warpgate", "previousExternalID", role.Status.ExternalID, "externalID", adopted.ID)
+				role.Status.ExternalID = adopted.ID
+			}
+		}
+		if err != nil {
 			if warpgate.IsNotFound(err) {
 				log.Info("role not found in Warpgate, will recreate", "externalID", role.Status.ExternalID)
 				role.Status.ExternalID = ""
@@ -172,4 +184,15 @@ func (r *WarpgateRoleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&warpgatev1alpha1.WarpgateRole{}).
 		Named("warpgaterole").
 		Complete(r)
+}
+
+// adoptRole takes over the Warpgate role that already has the requested name (one this
+// resource created and lost track of, or one made by hand) and brings it in line with
+// the spec, instead of failing on the name conflict on every reconcile.
+func adoptRole(wgClient *warpgate.Client, req warpgate.RoleCreateRequest) (*warpgate.Role, error) {
+	existing, err := wgClient.GetRoleByName(req.Name)
+	if err != nil {
+		return nil, fmt.Errorf("role %q exists in Warpgate but could not be looked up: %w", req.Name, err)
+	}
+	return wgClient.UpdateRole(existing.ID, req)
 }
